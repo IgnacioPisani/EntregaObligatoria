@@ -56,4 +56,11 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	UMaterialInterface* CooldownMaterial;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlaySanctuaryEffect();
+
+	UPROPERTY(EditAnywhere)
+	USoundBase* ActivateSound;
+	
 };

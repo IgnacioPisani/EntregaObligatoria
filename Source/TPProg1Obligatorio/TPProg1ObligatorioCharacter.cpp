@@ -122,7 +122,7 @@ void ATPProg1ObligatorioCharacter::BeginPlay()
 	{
 		HealthComponent->OnLifeChanged.AddDynamic(this,&ATPProg1ObligatorioCharacter::HandleLifeChanged);
 	}
-
+	HandleLifeChanged(HealthComponent->Health, HealthComponent->MaxHealth);
 }
 
 void ATPProg1ObligatorioCharacter::DoMove(float Right, float Forward)

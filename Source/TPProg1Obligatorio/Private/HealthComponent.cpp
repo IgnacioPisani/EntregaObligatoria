@@ -33,7 +33,7 @@ void UHealthComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 }
 
 
-void UHealthComponent::UpdateHealth(int HealthPoints)
+void UHealthComponent::UpdateHealth(float HealthPoints)
 {
 	Health = FMath::Clamp(Health + HealthPoints, MinHealth, MaxHealth);
 	OnLifeChanged.Broadcast(Health,MaxHealth);

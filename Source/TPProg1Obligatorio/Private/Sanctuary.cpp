@@ -5,6 +5,7 @@
 
 #include "HealthComponent.h"
 #include "Components/BoxComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ASanctuary::ASanctuary()
@@ -94,4 +95,13 @@ void ASanctuary::ResetCooldownTimer()
 
 	bIsAvailable = true;
 	Mesh->SetMaterial(0, AvailableMaterial);
+	if (HasAuthority())
+	{
+		Multicast_PlaySanctuaryEffect();
+	}
+}
+
+void ASanctuary::Multicast_PlaySanctuaryEffect_Implementation()
+{
+	UGameplayStatics::PlaySoundAtLocation(this, ActivateSound, GetActorLocation());
 }

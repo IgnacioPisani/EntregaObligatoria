@@ -21,4 +21,7 @@ public:
 protected:
 	UPROPERTY(meta = (BindWidget))
 	class UProgressBar* HealthProgressBar;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* HealthText;
 };

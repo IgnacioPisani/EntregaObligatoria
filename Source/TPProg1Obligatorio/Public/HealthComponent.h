@@ -33,10 +33,10 @@ public:
 	float MaxHealth = 100.f;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	float MinHealth = true;
+	float MinHealth = 0.f;
 
 	UFUNCTION(BlueprintCallable)
-	void UpdateHealth(int HealthPoints);
+	void UpdateHealth(float HealthPoints);
 
 	UPROPERTY(BlueprintAssignable)
 	FOnLifeChanged OnLifeChanged;	
