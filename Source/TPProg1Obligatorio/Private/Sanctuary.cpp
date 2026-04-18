@@ -1,107 +1,98 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Sanctuary.h"
-
 #include "HealthComponent.h"
+#include "HealNotifierInterface.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"  // DOREPLIFETIME
 
-// Sets default values
 ASanctuary::ASanctuary()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-	TriggerZone = CreateDefaultSubobject<UBoxComponent>(TEXT("TriggerZone"));
-	RootComponent = TriggerZone;
-	TriggerZone->SetCollisionProfileName(TEXT("Trigger"));
+    PrimaryActorTick.bCanEverTick = false;
+    bReplicates = true; // CRÍTICO — sin esto nada replica
 
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	Mesh->SetupAttachment(RootComponent);
+    TriggerZone = CreateDefaultSubobject<UBoxComponent>(TEXT("TriggerZone"));
+    RootComponent = TriggerZone;
+    TriggerZone->SetCollisionProfileName(TEXT("Trigger"));
 
-	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+    Mesh->SetupAttachment(RootComponent);
+    Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
-// Called when the game starts or when spawned
+void ASanctuary::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(ASanctuary, bIsAvailable); // replica a todos los clientes
+}
+
 void ASanctuary::BeginPlay()
 {
-	Super::BeginPlay();
-	Mesh->SetMaterial(0, AvailableMaterial);
-
+    Super::BeginPlay();
+    UpdateMaterial(); // estado inicial correcto en todos
 }
 
-// Called every frame
 void ASanctuary::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
-
+    Super::Tick(DeltaTime);
 }
-
 
 void ASanctuary::Interact_Implementation(AActor* Interactor)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Sanctuary: Interact called"));
+    // Solo el servidor ejecuta esto (llamado desde Server_Interact del Character)
+    if (!HasAuthority()) return;
 
-	if (!bIsAvailable)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Sanctuary: Not available (cooldown active)"));
-		return;
-	}
+    if (!bIsAvailable) return;
+    if (!Interactor) return;
 
-	if (!Interactor)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Sanctuary: Interactor is null"));
-		return;
-	}
+    APawn* Pawn = Cast<APawn>(Interactor);
+    if (!Pawn) return;
 
-	
-	APawn* Pawn = Cast<APawn>(Interactor);
-	if (!Pawn)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Sanctuary: Interactor is not a Pawn"));
-		return;
-	}
+    UHealthComponent* HealthComp = Pawn->FindComponentByClass<UHealthComponent>();
+    if (!HealthComp) return;
 
-	UHealthComponent* HealthComp = Pawn->FindComponentByClass<UHealthComponent>();
-	if (!HealthComp)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Sanctuary: Pawn has no HealthComponent"));
-		return;
-	}
+    HealthComp->UpdateHealth(HealAmount);
 
-	UE_LOG(LogTemp, Warning, TEXT("Sanctuary: Healing %s for %f"),
-		*Pawn->GetName(),
-		HealAmount);
+    if (Pawn->Implements<UHealNotifierInterface>())
+    {
+        IHealNotifierInterface::Execute_ShowHealMessage(Pawn, HealAmount);
+    }
+    
+    bIsAvailable = false;
+    UpdateMaterial(); 
 
-	HealthComp->UpdateHealth(HealAmount);
+    Multicast_PlaySanctuaryEffect();
 
-	bIsAvailable = false;
-	Mesh->SetMaterial(0, CooldownMaterial);
-	UE_LOG(LogTemp, Warning, TEXT("Sanctuary: Entering cooldown (%f seconds)"), CoolDown);
-
-
-	GetWorldTimerManager().SetTimer(
-		CooldownTimer,
-		this,
-		&ASanctuary::ResetCooldownTimer,
-		CoolDown,
-		false
-	);
+    GetWorldTimerManager().SetTimer(
+        CooldownTimer,
+        this,
+        &ASanctuary::ResetCooldownTimer,
+        CoolDown,
+        false
+    );
 }
 
 void ASanctuary::ResetCooldownTimer()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Sanctuary: Cooldown finished, available again"));
+    if (!HasAuthority()) return;
+    bIsAvailable = true;
+    UpdateMaterial(); 
+}
 
-	bIsAvailable = true;
-	Mesh->SetMaterial(0, AvailableMaterial);
-	if (HasAuthority())
-	{
-		Multicast_PlaySanctuaryEffect();
-	}
+void ASanctuary::OnRep_IsAvailable()
+{
+    UpdateMaterial();
+}
+
+void ASanctuary::UpdateMaterial()
+{
+    if (!Mesh) return;
+    Mesh->SetMaterial(0, bIsAvailable ? AvailableMaterial : CooldownMaterial);
 }
 
 void ASanctuary::Multicast_PlaySanctuaryEffect_Implementation()
 {
-	UGameplayStatics::PlaySoundAtLocation(this, ActivateSound, GetActorLocation());
+    if (ActivateSound)
+    {
+        UGameplayStatics::PlaySoundAtLocation(this, ActivateSound, GetActorLocation());
+    }
 }

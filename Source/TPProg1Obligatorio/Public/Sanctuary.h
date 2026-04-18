@@ -28,12 +28,9 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	float CoolDown = 10.0f;;
-
-	UPROPERTY(EditAnywhere)
-	bool bIsAvailable = true;
 	
 	UPROPERTY(VisibleAnywhere)
-    UBoxComponent* TriggerZone;
+	UBoxComponent* TriggerZone;
 
 
 	void Interact_Implementation(AActor* Interactor) override;
@@ -62,5 +59,13 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	USoundBase* ActivateSound;
+
+	UPROPERTY(ReplicatedUsing=OnRep_IsAvailable)
+	bool bIsAvailable = true;
+private:
+	UFUNCTION()
+	void OnRep_IsAvailable();
+
+	void UpdateMaterial();
 	
 };

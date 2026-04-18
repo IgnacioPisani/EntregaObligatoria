@@ -11,6 +11,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "HealthComponent.h"
 #include "HealthWidget.h"
+#include "HealNotificationWidget.h"
 #include "InputActionValue.h"
 #include "InteractableInterface.h"
 #include "TPProg1Obligatorio.h"
@@ -100,29 +101,22 @@ void ATPProg1ObligatorioCharacter::Look(const FInputActionValue& Value)
 void ATPProg1ObligatorioCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	if (HealthWidgetClass)
+	if (IsLocallyControlled())
 	{
-		HealthWidget = CreateWidget<UHealthWidget>(GetWorld(), HealthWidgetClass);
+		if (HealthWidgetClass)
+		{
+			HealthWidget = CreateWidget<UHealthWidget>(GetWorld(), HealthWidgetClass);
+			if (HealthWidget)
+				HealthWidget->AddToViewport();
+		}
 
-		if (HealthWidget)
+		if (HealthComponent)
 		{
-			HealthWidget->AddToViewport();
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("No se pudo crear HealthWidget"));
+			HealthComponent->OnLifeChanged.AddDynamic(
+				this, &ATPProg1ObligatorioCharacter::HandleLifeChanged);
+			HandleLifeChanged(HealthComponent->Health, HealthComponent->MaxHealth);
 		}
 	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("HealthWidgetClass es NULL"));
-	}
-	
-	if (HealthComponent)
-	{
-		HealthComponent->OnLifeChanged.AddDynamic(this,&ATPProg1ObligatorioCharacter::HandleLifeChanged);
-	}
-	HandleLifeChanged(HealthComponent->Health, HealthComponent->MaxHealth);
 }
 
 void ATPProg1ObligatorioCharacter::DoMove(float Right, float Forward)
@@ -167,28 +161,17 @@ void ATPProg1ObligatorioCharacter::DoJumpEnd()
 	StopJumping();
 }
 
+
 void ATPProg1ObligatorioCharacter::DoInteract()
 {
-	if (!CurrentInteractable)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[%s] DoInteract: No interactable in range"), *GetName());
-		return;
-	}
+	// CRÍTICO: solo el jugador local puede iniciar una interacción
+	if (!IsLocallyControlled()) return;
+	if (!CurrentInteractable) return;
 
-	if (!CurrentInteractable->Implements<UInteractableInterface>())
-	{
-		UE_LOG(LogTemp, Error, TEXT("[%s] DoInteract: Actor %s does NOT implement interface"),
-			*GetName(),
-			*CurrentInteractable->GetName());
-		return;
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("[%s] DoInteract: Interacting with %s"),
-		*GetName(),
-		*CurrentInteractable->GetName());
-
-	IInteractableInterface::Execute_Interact(CurrentInteractable, this);
+	// Le pide al servidor que ejecute la interacción
+	Server_Interact(CurrentInteractable);
 }
+
 
 void ATPProg1ObligatorioCharacter::NotifyActorBeginOverlap(AActor* OtherActor)
 {
@@ -235,5 +218,45 @@ void ATPProg1ObligatorioCharacter::HandleLifeChanged(float Health, float MaxHeal
 	if (HealthWidget)
 	{
 		HealthWidget->UpdateBar(Health, MaxHealth);
+	}
+}
+
+void ATPProg1ObligatorioCharacter::Server_Interact_Implementation(AActor* Interactable)
+{
+	if (Interactable && Interactable->Implements<UInteractableInterface>())
+	{
+		IInteractableInterface::Execute_Interact(Interactable, this);
+	}
+}
+
+void ATPProg1ObligatorioCharacter::ShowHealMessage_Implementation(float HealAmount)
+{
+	Client_ShowHealMessage(HealAmount);
+}
+
+void ATPProg1ObligatorioCharacter::Client_ShowHealMessage_Implementation(float HealAmount)
+{
+	if (!IsLocallyControlled()) return;
+
+	if (HealNotificationClass)
+	{
+		UHealNotificationWidget* Widget = CreateWidget<UHealNotificationWidget>(GetWorld(), HealNotificationClass);
+		if (Widget)
+		{
+			Widget->AddToViewport();
+
+			FString Msg = FString::Printf(TEXT("Has sido curado +%.0f"), HealAmount);
+			Widget->ShowMessage(Msg);
+
+			// Auto remover
+			FTimerHandle Timer;
+			GetWorld()->GetTimerManager().SetTimer(Timer, [Widget]()
+			{
+				if (Widget)
+				{
+					Widget->RemoveFromParent();
+				}
+			}, 2.0f, false);
+		}
 	}
 }

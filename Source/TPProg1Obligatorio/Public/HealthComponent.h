@@ -26,15 +26,18 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	UPROPERTY(ReplicatedUsing = OnRep_Health)
 	float Health = 50.f;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	UPROPERTY(Replicated)
 	float MaxHealth = 100.f;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	float MinHealth = 0.f;
 
+	UFUNCTION()
+	void OnRep_Health();
+	
 	UFUNCTION(BlueprintCallable)
 	void UpdateHealth(float HealthPoints);
 

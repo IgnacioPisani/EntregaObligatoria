@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "HealNotifierInterface.h"
+#include "InteractableInterface.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "TPProg1ObligatorioCharacter.generated.h"
@@ -21,7 +23,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
  *  Implements a controllable orbiting camera
  */
 UCLASS(abstract)
-class ATPProg1ObligatorioCharacter : public ACharacter
+class ATPProg1ObligatorioCharacter : public ACharacter, public IHealNotifierInterface
 {
 	GENERATED_BODY()
 
@@ -122,5 +124,20 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void HandleLifeChanged(float Health, float MaxHealth);
 
+	UPROPERTY(EditAnywhere, Category = "UI")
+	TSubclassOf<class UHealNotificationWidget> HealNotificationClass;
+
+	UPROPERTY()
+	UHealNotificationWidget* HealNotificationWidget;
+
+	UFUNCTION(Client, Reliable)
+	void Client_ShowHealMessage(float HealAmount);
+
+public:
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void ShowHealMessage(float HealAmount);
+
+	UFUNCTION(Server, Reliable)
+	void Server_Interact(AActor* Interactable);
 };
 
