@@ -60,7 +60,6 @@ void ASanctuary::Interact_Implementation(AActor* Interactor)
     bIsAvailable = false;
     UpdateMaterial(); 
 
-    Multicast_PlaySanctuaryEffect();
 
     GetWorldTimerManager().SetTimer(
         CooldownTimer,
@@ -76,6 +75,7 @@ void ASanctuary::ResetCooldownTimer()
     if (!HasAuthority()) return;
     bIsAvailable = true;
     UpdateMaterial(); 
+    Multicast_PlaySanctuaryEffect();
 }
 
 void ASanctuary::OnRep_IsAvailable()
