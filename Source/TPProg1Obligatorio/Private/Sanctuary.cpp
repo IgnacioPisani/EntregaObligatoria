@@ -22,13 +22,13 @@ ASanctuary::ASanctuary()
 void ASanctuary::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    DOREPLIFETIME(ASanctuary, bIsAvailable); // replica a todos los clientes
+    DOREPLIFETIME(ASanctuary, bIsAvailable);
 }
 
 void ASanctuary::BeginPlay()
 {
     Super::BeginPlay();
-    UpdateMaterial(); // estado inicial correcto en todos
+    UpdateMaterial(); 
 }
 
 void ASanctuary::Tick(float DeltaTime)

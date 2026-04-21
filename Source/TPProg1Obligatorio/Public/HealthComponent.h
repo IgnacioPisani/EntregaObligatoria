@@ -42,5 +42,8 @@ public:
 	void UpdateHealth(float HealthPoints);
 
 	UPROPERTY(BlueprintAssignable)
-	FOnLifeChanged OnLifeChanged;	
+	FOnLifeChanged OnLifeChanged;
+private:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 };

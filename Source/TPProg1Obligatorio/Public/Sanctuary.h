@@ -69,5 +69,8 @@ private:
 	void OnRep_IsAvailable();
 
 	void UpdateMaterial();
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	
 };
