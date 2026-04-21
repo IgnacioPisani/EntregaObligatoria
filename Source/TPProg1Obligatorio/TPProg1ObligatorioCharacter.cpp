@@ -164,11 +164,8 @@ void ATPProg1ObligatorioCharacter::DoJumpEnd()
 
 void ATPProg1ObligatorioCharacter::DoInteract()
 {
-	// CRÍTICO: solo el jugador local puede iniciar una interacción
 	if (!IsLocallyControlled()) return;
 	if (!CurrentInteractable) return;
-
-	// Le pide al servidor que ejecute la interacción
 	Server_Interact(CurrentInteractable);
 }
 
@@ -223,6 +220,7 @@ void ATPProg1ObligatorioCharacter::HandleLifeChanged(float Health, float MaxHeal
 
 void ATPProg1ObligatorioCharacter::Server_Interact_Implementation(AActor* Interactable)
 {
+	if (!HasAuthority()) return;
 	if (Interactable && Interactable->Implements<UInteractableInterface>())
 	{
 		IInteractableInterface::Execute_Interact(Interactable, this);
@@ -245,7 +243,7 @@ void ATPProg1ObligatorioCharacter::Client_ShowHealMessage_Implementation(float H
 		{
 			Widget->AddToViewport();
 
-			FString Msg = FString::Printf(TEXT("Has sido curado +%.0f"), HealAmount);
+			FString Msg = FString::Printf(TEXT("Te curaste +%.0f"), HealAmount);
 			Widget->ShowMessage(Msg);
 
 			// Auto remover

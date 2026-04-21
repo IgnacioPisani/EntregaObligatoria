@@ -29,7 +29,7 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_Health)
 	float Health = 50.f;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float MaxHealth = 100.f;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)

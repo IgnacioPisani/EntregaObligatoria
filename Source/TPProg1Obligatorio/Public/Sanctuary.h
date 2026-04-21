@@ -62,7 +62,9 @@ public:
 
 	UPROPERTY(ReplicatedUsing=OnRep_IsAvailable)
 	bool bIsAvailable = true;
+	
 private:
+	
 	UFUNCTION()
 	void OnRep_IsAvailable();
 

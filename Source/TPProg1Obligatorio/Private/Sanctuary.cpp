@@ -38,9 +38,6 @@ void ASanctuary::Tick(float DeltaTime)
 
 void ASanctuary::Interact_Implementation(AActor* Interactor)
 {
-    // Solo el servidor ejecuta esto (llamado desde Server_Interact del Character)
-    if (!HasAuthority()) return;
-
     if (!bIsAvailable) return;
     if (!Interactor) return;
 
