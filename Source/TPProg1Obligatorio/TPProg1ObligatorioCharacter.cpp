@@ -162,14 +162,6 @@ void ATPProg1ObligatorioCharacter::DoJumpEnd()
 }
 
 
-void ATPProg1ObligatorioCharacter::DoInteract()
-{
-	if (!IsLocallyControlled()) return;
-	if (!CurrentInteractable) return;
-	Server_Interact(CurrentInteractable);
-}
-
-
 void ATPProg1ObligatorioCharacter::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
@@ -218,6 +210,14 @@ void ATPProg1ObligatorioCharacter::HandleLifeChanged(float Health, float MaxHeal
 	}
 }
 
+void ATPProg1ObligatorioCharacter::DoInteract()
+{
+	if (!IsLocallyControlled()) return;
+	if (!CurrentInteractable) return;
+	Server_Interact(CurrentInteractable);
+}
+
+
 void ATPProg1ObligatorioCharacter::Server_Interact_Implementation(AActor* Interactable)
 {
 	if (!HasAuthority()) return;
@@ -246,7 +246,6 @@ void ATPProg1ObligatorioCharacter::Client_ShowHealMessage_Implementation(float H
 			FString Msg = FString::Printf(TEXT("Te curaste +%.0f"), HealAmount);
 			Widget->ShowMessage(Msg);
 
-			// Auto remover
 			FTimerHandle Timer;
 			GetWorld()->GetTimerManager().SetTimer(Timer, [Widget]()
 			{
